@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="오늘 할일을 우선순위별로 정리하고, 드래그로 나만의 순서를 만들어 보세요.">
+    <title>오늘 할일</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="config.js" defer></script>
+    <script src="cloud.js" defer></script>
+    <script src="auth.js" defer></script>
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header">
+        <a class="brand" href="./index.html" aria-label="오늘 할일 홈">
+          <span class="brand-icon" aria-hidden="true">✓</span>
+          <span>하루 한 칸</span>
+        </a>
+        <span class="header-note">하나씩, 차근차근</span>
+      </header>
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <p class="eyebrow">A LITTLE PROGRESS, EVERY DAY</p>
+          <h1 id="page-title">오늘 할일</h1>
+          <p class="subtitle">중요한 일부터 하나씩, 나만의 속도로 채워보세요.</p>
+        </section>
+        <section class="account-panel" aria-label="클라우드 계정">
+          <p id="cloud-status" role="status">클라우드 연결 중이에요.</p>
+          <p id="cloud-error" role="alert" hidden></p>
+          <p id="auth-info" role="status" hidden></p>
+          <div id="email-auth-panel" hidden>
+            <div class="auth-modes" role="group" aria-label="이메일 인증 방식">
+              <button id="email-login-mode" type="button" aria-pressed="true">이메일 로그인</button>
+              <button id="email-signup-mode" type="button" aria-pressed="false">회원가입</button>
+            </div>
+            <form id="email-auth-form" class="email-auth-form" novalidate>
+              <div><label for="auth-email">이메일</label><input id="auth-email" type="email" autocomplete="email" required maxlength="254"></div>
+              <div><label for="auth-password">비밀번호</label><input id="auth-password" type="password" autocomplete="current-password" required aria-describedby="auth-help"></div>
+              <div id="auth-confirm-field" hidden><label for="auth-confirm">비밀번호 확인</label><input id="auth-confirm" type="password" autocomplete="new-password" disabled></div>
+              <p id="auth-help">가입한 이메일과 비밀번호로 로그인하세요.</p>
+              <button id="email-auth-submit" type="submit">이메일로 로그인</button>
+            </form>
+            <p class="auth-divider">또는</p>
+          </div>
+          <p id="session-note" hidden>현재 계정으로 로그인되어 있어요. 이메일로 가입하거나 다른 계정으로 로그인하려면 ‘로그아웃 · 계정 변경’을 눌러주세요.</p>
+          <div id="github-account-summary" class="github-account-summary" hidden>
+            <p id="github-account-source"></p>
+            <strong id="github-account-name"></strong>
+            <p id="github-account-email" hidden></p>
+          </div>
+          <div class="account-actions">
+            <button id="login-button" type="button" disabled>GitHub로 로그인</button>
+            <button id="refresh-button" type="button" hidden>목록 새로고침</button>
+            <button id="logout-button" type="button" hidden>로그아웃 · 계정 변경</button>
+            <button id="export-button" type="button" hidden>기존 목록 내보내기</button>
+          </div>
+          <dialog id="github-account-dialog" class="github-account-dialog" aria-labelledby="github-dialog-title" aria-describedby="github-dialog-note">
+            <h2 id="github-dialog-title">GitHub 계정 확인</h2>
+            <p id="github-dialog-source"></p>
+            <strong id="github-dialog-account"></strong>
+            <p id="github-dialog-email" hidden></p>
+            <p id="github-dialog-note">앱에 연결된 계정 정보입니다. 실제 사용할 계정은 다음 GitHub 화면에서 확인하고 선택하세요. 비밀번호 입력 여부는 GitHub가 결정합니다.</p>
+            <div class="account-actions">
+              <button id="github-dialog-cancel" class="secondary-button" type="button" autofocus>취소</button>
+              <button id="github-dialog-continue" type="button">GitHub에서 계정 선택</button>
+            </div>
+          </dialog>
+          <div id="password-panel" hidden>
+            <button id="password-settings-toggle" type="button" aria-expanded="false" aria-controls="password-settings-form">이메일 로그인용 비밀번호 설정</button>
+            <form id="password-settings-form" class="email-auth-form" hidden novalidate>
+              <p>현재 로그인한 계정에 비밀번호를 설정하면 같은 이메일로도 로그인할 수 있어요.</p>
+              <div><label for="account-password">새 비밀번호</label><input id="account-password" type="password" autocomplete="new-password" required></div>
+              <div><label for="account-password-confirm">새 비밀번호 확인</label><input id="account-password-confirm" type="password" autocomplete="new-password" required></div>
+              <button type="submit">비밀번호 저장</button>
+            </form>
+          </div>
+          <div id="import-panel" hidden>
+            <p>가져온 목록은 현재 로그인한 계정에 저장돼요. 원본은 보존됩니다.</p>
+            <button id="import-local-button" type="button" hidden>이 브라우저의 기존 목록 가져오기</button>
+            <button id="import-file-button" type="button">JSON 목록 가져오기</button>
+            <input id="import-file" type="file" accept="application/json,.json" hidden>
+          </div>
+        </section>
+        <div id="workspace" hidden>
+        <section class="composer" aria-label="새 할 일">
+          <form id="todo-form" novalidate>
+            <div class="input-field">
+              <label for="todo-input">어떤 일을 해볼까요?</label>
+              <input id="todo-input" name="todo" type="text" maxlength="400"
+                placeholder="새로운 할 일을 적어주세요" autocomplete="off"
+                aria-describedby="input-error" required>
+            </div>
+            <div class="priority-field">
+              <label for="new-priority">우선순위</label>
+              <select id="new-priority" name="priority">
+                <option value="high">높음</option>
+                <option value="medium" selected>중간</option>
+                <option value="low">낮음</option>
+              </select>
+            </div>
+            <button class="add-button" type="submit"><span aria-hidden="true">＋</span> 추가</button>
+            <p id="input-error" class="input-error" role="alert" hidden></p>
+          </form>
+        </section>
+        <section class="board-section" aria-labelledby="list-heading">
+          <div class="board-header">
+            <div class="list-title"><h2 id="list-heading">나의 목록</h2><span id="total-count" class="count-badge">0</span></div>
+            <p id="completion-count">0개 완료</p>
+          </div>
+          <p id="drag-help" class="drag-help">⠿ 핸들을 끌어 순서나 등급을 바꿔보세요. 모바일은 길게 누른 후 이동하세요.</p>
+          <p id="empty-state" class="empty-state">아직 할 일이 없어요. 첫 번째 할 일을 적어보세요.</p>
+          <div id="todo-board" class="todo-board">
+            <section class="priority-column" data-priority="high" aria-labelledby="high-heading">
+              <header class="column-header"><h3 id="high-heading"><span class="priority-dot" aria-hidden="true"></span>높음</h3><span class="column-count" aria-label="높음 항목 수">0</span></header>
+              <p class="column-description">먼저 집중할 일</p>
+              <ul class="priority-list" aria-label="높음 우선순위 할 일"></ul>
+              <p class="group-empty">할 일을 여기에 놓아보세요.</p>
+            </section>
+            <section class="priority-column" data-priority="medium" aria-labelledby="medium-heading">
+              <header class="column-header"><h3 id="medium-heading"><span class="priority-dot" aria-hidden="true"></span>중간</h3><span class="column-count" aria-label="중간 항목 수">0</span></header>
+              <p class="column-description">차근차근 해볼 일</p>
+              <ul class="priority-list" aria-label="중간 우선순위 할 일"></ul>
+              <p class="group-empty">할 일을 여기에 놓아보세요.</p>
+            </section>
+            <section class="priority-column" data-priority="low" aria-labelledby="low-heading">
+              <header class="column-header"><h3 id="low-heading"><span class="priority-dot" aria-hidden="true"></span>낮음</h3><span class="column-count" aria-label="낮음 항목 수">0</span></header>
+              <p class="column-description">여유를 두고 해도 될 일</p>
+              <ul class="priority-list" aria-label="낮음 우선순위 할 일"></ul>
+              <p class="group-empty">할 일을 여기에 놓아보세요.</p>
+            </section>
+          </div>
+        </section>
+        </div>
+        <p id="save-hint" class="save-hint">목록과 우선순위, 순서는 로그인한 계정의 Supabase에 저장돼요.</p>
+
+        <p id="announcer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+        <noscript><p class="storage-warning">할 일 목록을 사용하려면 브라우저에서 JavaScript를 켜주세요.</p></noscript>
+      </main>
+      <footer class="site-footer">작은 실천이 모여 멋진 하루가 돼요.</footer>
+    </div>
+  </body>
+</html>
